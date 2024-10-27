@@ -1,0 +1,56 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential git wget debootstrap qemu-user-static e2fsprogs
+
+      - name: Build Ubuntu Desktop
+        run: |
+          chmod +x ./buildUbuntuDesktop.sh
+          ./buildUbuntuDesktop.sh
+
+      - name: List files in raw directory
+        run: |
+          ls -l ./raw/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ubuntu-desktop-image
+          path: ./raw/UbuntuDesktop_*
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: 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
+        with:
+          tag_name: v1.0
+          release_name: Ubuntu Desktop for Huawei MateBook E Go
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: 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
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./raw/UbuntuDesktop_noble.img
+          asset_name: UbuntuDesktop_noble.img
+          asset_content_type: application/octet-stream
